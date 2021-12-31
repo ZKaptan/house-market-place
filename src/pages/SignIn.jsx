@@ -51,50 +51,50 @@ const SignIn = () => {
 					<p className="pageHeader">Welcome Back!</p>
 				</header>
 
-				<main>
-					<form onSubmit={onSubmit}>
+				<form onSubmit={onSubmit}>
+					<input
+						id="email"
+						value={email}
+						type="email"
+						placeholder="Email"
+						className="emailInput"
+						onChange={onChange}
+					/>
+					<div className="passwordInputDiv">
 						<input
-							id="email"
-							value={email}
-							type="email"
-							placeholder="Email"
-							className="emailInput"
+							type={showPassword ? "text" : "password"}
+							className="passwordInput"
+							placeholder="Password"
+							id="password"
+							value={password}
 							onChange={onChange}
 						/>
-						<div className="passwordInputDiv">
-							<input
-								type={showPassword ? "text" : "password"}
-								className="passwordInput"
-								placeholder="Password"
-								id="password"
-								value={password}
-								onChange={onChange}
-							/>
-							<img
-								src={visibilityIcon}
-								alt="show password"
-								className="showPassword"
-								onClick={() => {
-									setShowPassword((prevState) => !prevState);
-								}}
-							/>
-						</div>
-						<Link to="/forgot-password" className="forgotPasswordLink">
-							Forgot Password
-						</Link>
-
-						<div className="signInBar">
-							<p className="sigInText">Sign In</p>
-							<button className="signInButton">
-								<ArrowRightIcon filter="#ffffff" width="34px" height="34px" />
-							</button>
-						</div>
-					</form>
-					<OAuth />
-					<Link to="/sign-up" className="registerLink">
-						Sign Up Instead
+						<img
+							src={visibilityIcon}
+							alt="show password"
+							className="showPassword"
+							onClick={() => {
+								setShowPassword((prevState) => !prevState);
+							}}
+						/>
+					</div>
+					<Link to="/forgot-password" className="forgotPasswordLink">
+						Forgot Password
 					</Link>
-				</main>
+
+					<div className="signInBar">
+						<p className="sigInText">Sign In</p>
+						<button className="signInButton">
+							<ArrowRightIcon filter="#ffffff" width="34px" height="34px" />
+						</button>
+					</div>
+				</form>
+
+				<OAuth />
+
+				<Link to="/sign-up" className="registerLink">
+					Sign Up Instead
+				</Link>
 			</div>
 		</>
 	);

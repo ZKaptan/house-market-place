@@ -6,17 +6,18 @@ import {
 	getStorage,
 	getDownloadURL,
 } from "firebase/storage";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { doc, updateDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../firebase.config";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
 
-const CreateListing = () => {
-	// eslint-disable-next-line
+const EditListing = () => {
+	// eslint-disable-next-line no-unused-vars
 	const [geoLocationEnabled, setGetLocationEnabled] = useState(true);
 	const [loading, setLoading] = useState(false);
+	const [listing, setListing] = useState(false);
 	const [formData, setFormData] = useState({
 		type: "rent",
 		name: "",
@@ -51,8 +52,37 @@ const CreateListing = () => {
 
 	const auth = getAuth();
 	const navigate = useNavigate();
+	const params = useParams();
 	const isMounted = useRef(true);
 
+	// Redirect if listing does not belong to user
+	useEffect(() => {
+		if (listing && listing.userRef !== auth.currentUser.uid) {
+			toast.error("You cannot edit that listing");
+			navigate("/");
+		}
+	}, [auth.currentUser.uid, navigate, listing]);
+
+	// Fetch listing to edit
+	useEffect(() => {
+		setLoading(true);
+		const fetchListing = async () => {
+			const docRef = doc(db, "listings", params.listingId);
+			const docSnap = await getDoc(docRef);
+			if (docSnap.exists()) {
+				setListing(docSnap.data());
+				setFormData({ ...docSnap.data(), address: docSnap.data().location });
+				setLoading(false);
+			} else {
+				navigate("/");
+				toast.error("Listing does not exist");
+			}
+		};
+
+		fetchListing();
+	}, [params.listingId, navigate]);
+
+	// Sets userRef to logged in user
 	useEffect(() => {
 		if (isMounted) {
 			onAuthStateChanged(auth, (user) => {
@@ -90,26 +120,21 @@ const CreateListing = () => {
 
 		if (geoLocationEnabled) {
 			const response = await fetch(
-				`https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
-					address
-				)}&apiKey=${process.env.REACT_APP_GEOCODE_API_KEY}`
+				`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API_KEY}`
 			);
 
 			const data = await response.json();
-
-			console.log(data);
-			geolocation.lat = data.features[0]?.properties.lat ?? 0;
-			geolocation.lng = data.features[0]?.properties.lon ?? 0;
+			geolocation.lat = data.results[0]?.geometry.location.lat ?? 0;
+			geolocation.lng = data.results[0]?.geometry.location.lng ?? 0;
 
 			location =
-				data.features.length === 0
+				data.status === "ZERO_RESULTS"
 					? undefined
-					: data.features[0].properties.formatted;
+					: data.results[0]?.formatted_address;
 
 			if (location === undefined || location.includes("undefined")) {
 				setLoading(false);
 				toast.error("Please enter a valid address");
-				return;
 			}
 		} else {
 			geolocation.lat = latitude;
@@ -127,7 +152,20 @@ const CreateListing = () => {
 				const uploadTask = uploadBytesResumable(storageRef, image);
 				uploadTask.on(
 					"state_changed",
-					(snapshot) => {},
+					(snapshot) => {
+						const progress =
+							(snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+						console.log("Upload is " + progress + "% done");
+						// eslint-disable-next-line default-case
+						switch (snapshot.state) {
+							case "paused":
+								console.log("Upload is paused");
+								break;
+							case "running":
+								console.log("Upload is running");
+								break;
+						}
+					},
 					(error) => {
 						reject(error);
 					},
@@ -161,7 +199,8 @@ const CreateListing = () => {
 
 		!formDataCopy.offer && delete formDataCopy.discountedPrice;
 
-		const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+		const docRef = doc(db, "listings", params.listingId);
+		await updateDoc(docRef, formDataCopy);
 		setLoading(false);
 		toast.success("Listing saved");
 		navigate(`/category/${formDataCopy.type}/${docRef.id}`);
@@ -194,7 +233,7 @@ const CreateListing = () => {
 	return (
 		<div className="profile">
 			<header>
-				<p className="pageHeader">Create a listing</p>
+				<p className="pageHeader">Edit a listing</p>
 			</header>
 			<main>
 				<form onSubmit={onSubmit}>
@@ -414,7 +453,7 @@ const CreateListing = () => {
 						required
 					/>
 					<button type="submit" className="primaryButton createListingButton">
-						Create Listing
+						Edit Listing
 					</button>
 				</form>
 			</main>
@@ -422,4 +461,4 @@ const CreateListing = () => {
 	);
 };
 
-export default CreateListing;
+export default EditListing;

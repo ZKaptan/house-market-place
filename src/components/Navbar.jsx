@@ -15,7 +15,7 @@ const Navbar = () => {
 	};
 
 	return (
-		<footer className="navbar">
+		<footer className="navbar" style={{ marginTop: "100px" }}>
 			<nav className="navbarNav">
 				<ul className="navbarListItems">
 					<li onClick={() => navigate("/")} className="navbarListItem">
