@@ -5,3 +5,6 @@ This is a fullstack application I developed that allows users to view offers of 
 
 ## Technologies used
 This application was built using using JavaScript, ReactJS, and Firebase as a database and authentication. Firebase made this process simpler as acted as an all in one technology. The site can be viewed [here.](https://house-market-place.vercel.app) Enjoy!
+!
+
+[image](https://user-images.githubusercontent.com/81720594/147857595-9aedc369-ac49-4088-beb8-b847ef369d35.png)
